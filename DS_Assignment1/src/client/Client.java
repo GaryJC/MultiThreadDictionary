@@ -21,7 +21,8 @@ public class Client {
 		ui.start();
 		try {
 //			args[0], args[1] convert from str to int 
-			socket = new Socket("localhost", 8888);
+//			socket = new Socket("localhost", 8888);
+			socket = new Socket(args[0], Integer.parseInt(args[1]));
 		} catch (UnknownHostException e) {
 //			e.printStackTrace();
 			System.out.println("UnknownHostException: " + e);

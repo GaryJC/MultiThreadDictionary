@@ -1,6 +1,5 @@
 package server;
 
-import java.awt.EventQueue;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -9,11 +8,8 @@ import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 import java.util.concurrent.ConcurrentHashMap;
-
-import javax.swing.JTextPane;
-
-import client.Client;
-import client.UI;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 
 public class Connection extends Thread {
 	Socket socket = null;
@@ -21,6 +17,19 @@ public class Connection extends Thread {
 	BufferedWriter output;
 	ConcurrentHashMap<String, String> dictionary = new ConcurrentHashMap<String, String>();
 	String searchResult = null;
+	
+	private JSONObject parseResString(String res) {
+		JSONObject resJSON = null;
+		try {
+			JSONParser parser = new JSONParser();
+			resJSON = (JSONObject) parser.parse(res);
+		} catch (Exception e) {
+//			e.printStackTrace();
+			System.out.println("Exception: " + e);
+		}
+		return resJSON;
+	}
+	
 	@Override
 	public void run() {
 //		super.run();
@@ -28,16 +37,22 @@ public class Connection extends Thread {
 			while(true) {
 				String request = input.readLine();
 				System.out.println("connection request: "+ request);
-				String[] splitRequest = request.split("-");
 				
-				String operation = splitRequest[0];
-				String word = splitRequest[1];
+				JSONObject resJSON = parseResString(request);
+				String operation = (String) resJSON.get("operation");
+				String word = (String) resJSON.get("word");
+				String meaning = (String) resJSON.get("meaning");
+				
+//				String[] splitRequest = request.split("-");
+//				String operation = splitRequest[0];
+//				String word = splitRequest[1];
 				switch(operation) {
 				case "Add":
-					String addMeaning = splitRequest[2];
+//					String addMeaning = splitRequest[2];	
 					if(!dictionary.containsKey(word)) {
-						dictionary.put(word, addMeaning);	
+						dictionary.put(word, meaning);	
 						Server.writeDictionary();
+						ServerUI.setServerDict();
 						output.write(word + " added successfully" + "\n");
 						output.flush();
 						System.out.println(word + "added successfully");
@@ -71,6 +86,7 @@ public class Connection extends Thread {
 					}else {
 						dictionary.remove(word);
 						Server.writeDictionary();
+						ServerUI.setServerDict();
 						System.out.println(word + " is deleted");
 						output.write(word + " is deleted" + "\n");
 						output.flush();
@@ -78,15 +94,16 @@ public class Connection extends Thread {
 					break;
 					
 				case "Update":
-					String updateMeaning = splitRequest[2];
+//					String updateMeaning = splitRequest[2];
 					if(!dictionary.containsKey(word)) {	
 						System.out.println(word + "is not existed");
 						output.write(word + "is not existed" + "\n");
 						output.flush();
 					}
 					else {
-						dictionary.put(word, updateMeaning);
+						dictionary.put(word, meaning);
 						Server.writeDictionary();
+						ServerUI.setServerDict();
 						System.out.println(word + " updated successfully");
 						output.write(word + " updated successfully" + "\n");
 						output.flush();
